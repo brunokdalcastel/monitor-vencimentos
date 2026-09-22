@@ -1,0 +1,43 @@
+# PowerShell
+*.ps1xml.bak
+Microsoft.PowerShell_profile.ps1
+
+# Segredos e configuração local
+local.settings.json
+!local.settings.json.example
+
+# Azurite (Storage local)
+.azurite/
+__azurite_db*__.json
+__blobstorage__/
+__queuestorage__/
+__tablestorage__/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars.local
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Saída local de e-mails (T06 - EMAIL_MODO=Arquivo)
+saida-emails/
+
+# Azure Functions Core Tools
+bin/
+obj/
+appsettings.json
+
+# Editor / SO
+.vscode/
+.vs/
+*.swp
+Thumbs.db
+.DS_Store
