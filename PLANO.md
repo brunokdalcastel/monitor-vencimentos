@@ -62,9 +62,10 @@ Nada de código antes disto.
 
 ## Fase 1 — MVP
 
-### T01 — Estrutura do repositório
+### T01 — Estrutura do repositório ✅ Concluída (2026-09-22)
 **Entrega:** `git init`, estrutura da seção 9 da especificação, `.gitignore` (PowerShell, Terraform, `local.settings.json`, `.azurite/`), `README.md` inicial, `docs/arquitetura.md` (copiar diagrama da especificação), ADRs `0001`…`0012` (um por decisão D1–D12, formato curto: contexto / decisão / consequências), mover a especificação para `docs/especificacao.md` (e atualizar o caminho no `CLAUDE.md`), `PSScriptAnalyzerSettings.psd1` na raiz.
 **Aceite:** árvore de pastas criada; `git status` limpo após commit inicial; nenhum segredo versionado.
+**Pendências:** nenhuma. O caminho da especificação no `CLAUDE.md` já apontava para `docs/especificacao.md`, então não precisou de alteração. `docs/privacidade.md` (previsto na estrutura da seção 9) será criado na T11, conforme o plano. Repositório remoto no GitHub (`monitor-vencimentos`, privado) é tarefa do Marco 0 [HUMANO] — este commit está só local até lá.
 
 ### T02 — Módulo de regras (lógica pura) + Pester
 **Arquivo:** `src/modules/Vencimentos/Vencimentos.psm1` (+ `.psd1`).
