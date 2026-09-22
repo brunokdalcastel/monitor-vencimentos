@@ -139,6 +139,8 @@ Nada de código antes disto.
 
 ## Fase 2 — Agente A1 (detalhar após o piloto)
 
+> **Premissa (confirmada em 2026-09-22):** não teremos acesso remoto às máquinas dos clientes onde o certificado A1 está instalado. Por isso o agente precisa ser autoinstalável — o cliente (ou o TI dele) executa o instalador (T23) uma vez, e daí em diante só há tráfego de saída da máquina dele para a API (T21). Nenhuma tarefa desta fase pode assumir acesso direto/remoto a essas máquinas.
+
 - **T20** Especificação da API `ReceberAgente` (contrato JSON, versionamento, limites de tamanho) + ADR.
 - **T21** Function HTTP `ReceberAgente`: valida chave de API (hash na tabela `Clientes`, comparação em tempo constante), valida payload, upsert em `Itens` com `Tipo=CertA1`, RK = thumbprint.
 - **T22** Agente `agent/Coletar-CertificadosA1.ps1` compatível com **PowerShell 5.1**: lê `Cert:\CurrentUser\My` e `Cert:\LocalMachine\My`, filtra emissores ICP-Brasil (lista configurável), envia só metadados; log local; nunca exporta chave privada.
