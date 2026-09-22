@@ -30,7 +30,7 @@ Cada uma vira um ADR em `docs/decisoes/` na T01.
 | D6 | Horário | Timer `0 0 11 * * *` (UTC) = **08:00 BRT**; cálculo de dias no fuso `America/Sao_Paulo` | Flex/Linux não aceita `WEBSITE_TIME_ZONE` |
 | D7 | Alertas | **Um e-mail consolidado por contato por dia** (não um por item) | Menos ruído, menos custo |
 | D8 | Deduplicação | Chave de `AlertasEnviados` = `ItemId` + `DataVencimento` + `Marco` | Renovou → data muda → ciclo de alertas reinicia sozinho |
-| D9 | Item vencido | Alerta "VENCIDO" no dia 0 e **repetição a cada 7 dias** enquanto `Ativo=true` | Não deixar item vencido esquecido |
+| D9 | Item vencido | Marco `0` no dia do vencimento; depois, alerta "VENCIDO" com **repetição a cada 7 dias** enquanto `Ativo=true` | Não deixar item vencido esquecido |
 | D10 | Cadastro de A3/Manual no MVP | **CSV + script** `tools/Import-Itens.ps1` | Portal só na Fase 3 |
 | D11 | IaC / CI | Terraform (azurerm 4.x) com state em Storage separado; GitHub Actions com OIDC | Conforme especificação |
 | D12 | Domínios não-.br | RDAP via bootstrap IANA (`https://rdap.org/domain/<d>`); `.br` direto no Registro.br | Cobre clientes com `.com` |
@@ -67,7 +67,7 @@ Nada de código antes disto.
 **Aceite:** árvore de pastas criada; `git status` limpo após commit inicial; nenhum segredo versionado.
 **Pendências:** nenhuma. O caminho da especificação no `CLAUDE.md` já apontava para `docs/especificacao.md`, então não precisou de alteração. `docs/privacidade.md` (previsto na estrutura da seção 9) será criado na T11, conforme o plano. Repositório remoto no GitHub (`monitor-vencimentos`, privado) é tarefa do Marco 0 [HUMANO] — este commit está só local até lá.
 
-### T02 — Módulo de regras (lógica pura) + Pester
+### T02 — Módulo de regras (lógica pura) + Pester ✅ Concluída (2026-09-22)
 **Arquivo:** `src/modules/Vencimentos/Vencimentos.psm1` (+ `.psd1`).
 **Funções:**
 - `Get-DataHojeBrasil` → `[datetime]` só a data no fuso `America/Sao_Paulo` (aceita `-Agora` para teste).
@@ -76,6 +76,7 @@ Nada de código antes disto.
 - `Test-AlertaPendente -ItemId -DataVencimento -Marco -AlertasEnviados`
 - `ConvertTo-ItemNormalizado` (valida Tipo, Alvo, ContatosAlerta; separa e-mails por `;`).
 **Aceite:** testes Pester cobrindo todos os exemplos da "Regra de marcos", fronteiras (31/30/16/15/8/7/1/0/-1/-7/-8), virada de fuso (23:30 BRT = dia seguinte em UTC), renovação (data nova → alerta pendente de novo). `Invoke-Pester` verde; `Invoke-ScriptAnalyzer` sem erros.
+**Pendências:** 70 testes em `tests/Vencimentos.Tests.ps1` passando (Pester 5.9.1) e ScriptAnalyzer sem apontamentos, validados no **Windows PowerShell 5.1** e no **PowerShell 7.4.20** (Windows; o Linux das Functions será coberto pelo CI na T10). No 7.4 o fuso é resolvido como `America/Sao_Paulo`; no 5.1 (.NET Framework) cai no fallback `E. South America Standard Time`. Duas escolhas além do texto da tarefa: `ConvertTo-ItemNormalizado` também exige `DataVencimento` (`yyyy-MM-dd`) para `CertA3`/`Manual` e normaliza `Ativo`. `Test-AlertaPendente` espera registros com `ItemId`, `DataVencimento` e `Marco`; o formato de PK/RK de `AlertasEnviados` fica para a T05/T07. ADR 0009 alinhado à Regra de marcos (marco `0` no dia do vencimento, `VENCIDO-n` a partir de −1).
 
 ### T03 — Verificação de SSL
 **Função:** `Get-CertificadoSsl -Host -Porta 443 -TimeoutMs 10000` → `NotAfter`, `Emissor`, `Assunto`, `Thumbprint`, `CadeiaValida`, `ErrosCadeia`, `Erro`.
