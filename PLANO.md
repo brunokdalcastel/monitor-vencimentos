@@ -53,7 +53,7 @@ Nada de código antes disto.
 
 - [ ] **M0.1** Conferir contrato de trabalho (exclusividade, não concorrência, propriedade intelectual). Usar equipamento, conta e horário próprios.
 - [ ] **M0.2** Assinatura Azure pessoal + **Budget com alerta** (ex.: US$ 10/mês, alertas a 50/80/100%).
-- [ ] **M0.3** Conta GitHub e repositório **privado** `monitor-vencimentos` (vazio).
+- [x] **M0.3** Conta GitHub e repositório **privado** `monitor-vencimentos` (vazio). — Criado em 2026-09-22: https://github.com/brunokdalcastel/monitor-vencimentos (privado); histórico local (T01+T02) enviado para `origin/master`.
 - [ ] **M0.4** Instalar localmente: PowerShell 7.4+, Azure Functions Core Tools v4, Azurite (`npm i -g azurite`), Terraform ≥ 1.9, Azure CLI, Git, Pester 5 e PSScriptAnalyzer (`Install-Module Pester, PSScriptAnalyzer -Scope CurrentUser`).
 - [ ] **M0.5** Revisar a tabela de decisões acima e ajustar o que quiser.
 - [ ] **M0.6** (pode esperar até o prod) Domínio próprio para envio de e-mail.
