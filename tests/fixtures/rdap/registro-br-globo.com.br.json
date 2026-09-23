@@ -1,0 +1,336 @@
+{
+  "objectClassName": "domain",
+  "handle": "globo.com.br",
+  "ldhName": "globo.com.br",
+  "nameservers": [
+    {
+      "objectClassName": "nameserver",
+      "ldhName": "ns01.oghost.com.br",
+      "events": [
+        {
+          "eventAction": "delegation check",
+          "eventDate": "2026-09-23T08:00:23Z",
+          "status": [
+            "ns aa"
+          ]
+        },
+        {
+          "eventAction": "last correct delegation check",
+          "eventDate": "2026-09-23T08:00:23Z"
+        }
+      ]
+    },
+    {
+      "objectClassName": "nameserver",
+      "ldhName": "ns02.oghost.com.br",
+      "events": [
+        {
+          "eventAction": "delegation check",
+          "eventDate": "2026-09-23T08:00:23Z",
+          "status": [
+            "ns aa"
+          ]
+        },
+        {
+          "eventAction": "last correct delegation check",
+          "eventDate": "2026-09-23T08:00:23Z"
+        }
+      ]
+    },
+    {
+      "objectClassName": "nameserver",
+      "ldhName": "ns03.oghost.com.br",
+      "events": [
+        {
+          "eventAction": "delegation check",
+          "eventDate": "2026-09-23T08:00:23Z",
+          "status": [
+            "ns aa"
+          ]
+        },
+        {
+          "eventAction": "last correct delegation check",
+          "eventDate": "2026-09-23T08:00:23Z"
+        }
+      ]
+    },
+    {
+      "objectClassName": "nameserver",
+      "ldhName": "ns04.oghost.com.br",
+      "events": [
+        {
+          "eventAction": "delegation check",
+          "eventDate": "2026-09-23T08:00:23Z",
+          "status": [
+            "ns aa"
+          ]
+        },
+        {
+          "eventAction": "last correct delegation check",
+          "eventDate": "2026-09-23T08:00:23Z"
+        }
+      ]
+    }
+  ],
+  "secureDNS": {
+    "delegationSigned": false
+  },
+  "links": [
+    {
+      "value": "https://rdap.registro.br/domain/globo.com.br",
+      "rel": "self",
+      "href": "https://rdap.registro.br/domain/globo.com.br",
+      "type": "application/rdap+json"
+    },
+    {
+      "value": "https://rdap.registro.br/domain/globo.com.br",
+      "rel": "archives",
+      "href": "https://rdap.registro.br/domain/globo.com.br?ticket=20320",
+      "type": "application/rdap+json"
+    }
+  ],
+  "entities": [
+    {
+      "objectClassName": "entity",
+      "handle": "27865757002148",
+      "vcardArray": [
+        "vcard",
+        [
+          [
+            "version",
+            {},
+            "text",
+            "4.0"
+          ],
+          [
+            "kind",
+            {},
+            "text",
+            "org"
+          ],
+          [
+            "fn",
+            {},
+            "text",
+            "Globo Comunicação e Participaçoes SA"
+          ],
+          [
+            "adr",
+            {},
+            "text",
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "BR"
+            ]
+          ]
+        ]
+      ],
+      "roles": [
+        "registrant"
+      ],
+      "publicIds": [
+        {
+          "type": "cnpj",
+          "identifier": "27.865.757/0021-48"
+        }
+      ],
+      "entities": [
+        {
+          "objectClassName": "entity",
+          "handle": "CLKED1",
+          "vcardArray": [
+            "vcard",
+            [
+              [
+                "version",
+                {},
+                "text",
+                "4.0"
+              ],
+              [
+                "kind",
+                {},
+                "text",
+                "individual"
+              ],
+              [
+                "fn",
+                {},
+                "text",
+                "Clarissa Kede"
+              ],
+              [
+                "email",
+                {},
+                "text",
+                "registro.br@g.globo"
+              ],
+              [
+                "lang",
+                {},
+                "language-tag",
+                "pt"
+              ],
+              [
+                "adr",
+                {},
+                "text",
+                [
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "BR"
+                ]
+              ]
+            ]
+          ],
+          "roles": [
+            "administrative"
+          ],
+          "events": [
+            {
+              "eventAction": "registration",
+              "eventDate": "2019-07-29T18:43:08Z"
+            },
+            {
+              "eventAction": "last changed",
+              "eventDate": "2024-04-04T17:55:43Z"
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "eventAction": "registration",
+          "eventDate": "2005-09-06T12:00:00Z"
+        },
+        {
+          "eventAction": "last changed",
+          "eventDate": "2024-01-10T19:43:04Z"
+        }
+      ],
+      "links": [
+        {
+          "value": "https://rdap.registro.br/entity/27865757002148",
+          "rel": "self",
+          "href": "https://rdap.registro.br/entity/27865757002148",
+          "type": "application/rdap+json"
+        }
+      ],
+      "legalRepresentative": "CLARISSA KEDE"
+    },
+    {
+      "objectClassName": "entity",
+      "handle": "CTG6",
+      "vcardArray": [
+        "vcard",
+        [
+          [
+            "version",
+            {},
+            "text",
+            "4.0"
+          ],
+          [
+            "kind",
+            {},
+            "text",
+            "individual"
+          ],
+          [
+            "fn",
+            {},
+            "text",
+            "Contato Técnico - Globo.com"
+          ],
+          [
+            "email",
+            {},
+            "text",
+            "registro.br@g.globo"
+          ],
+          [
+            "lang",
+            {},
+            "language-tag",
+            "pt"
+          ],
+          [
+            "adr",
+            {},
+            "text",
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "BR"
+            ]
+          ]
+        ]
+      ],
+      "roles": [
+        "technical"
+      ],
+      "events": [
+        {
+          "eventAction": "registration",
+          "eventDate": "2000-06-19T12:00:00Z"
+        },
+        {
+          "eventAction": "last changed",
+          "eventDate": "2024-01-11T13:43:09Z"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "eventAction": "registration",
+      "eventDate": "1996-10-25T11:00:00Z"
+    },
+    {
+      "eventAction": "last changed",
+      "eventDate": "2019-10-12T08:21:11Z"
+    },
+    {
+      "eventAction": "expiration",
+      "eventDate": "2029-10-25T11:00:00Z"
+    }
+  ],
+  "status": [
+    "active"
+  ],
+  "notices": [
+    {
+      "title": "Use and Privacy Policy",
+      "description": [
+        "Copyright (c) Nic.br - Use of this data is governed by the Use and Privacy Policy. Distribution, commercialization, reproduction, and use for advertising or similar purposes are expressly prohibited.",
+        "2026-09-23T09:42:40-03:00 - 201.76.126.41"
+      ],
+      "links": [
+        {
+          "value": "https://rdap.registro.br/domain/globo.com.br",
+          "rel": "alternate",
+          "href": "https://registro.br/upp",
+          "type": "text/html"
+        }
+      ]
+    }
+  ],
+  "rdapConformance": [
+    "rdap_level_0",
+    "nicbr_level_0"
+  ],
+  "port43": "whois.registro.br"
+}
