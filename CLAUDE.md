@@ -5,7 +5,7 @@ Especificação: `docs/especificacao.md` (antes da T01: `projeto-monitor-vencime
 
 ## Como trabalhar
 - Execute **uma tarefa do `PLANO.md` por sessão**, respeitando os critérios de aceite. Não adiante tarefas futuras.
-- Siga as decisões D1–D12 do `PLANO.md`. Se precisar contrariar uma, pare e pergunte; se aprovado, registre um novo ADR em `docs/decisoes/`.
+- Siga as decisões D1–D13 do `PLANO.md`. Se precisar contrariar uma, pare e pergunte; se aprovado, registre um novo ADR em `docs/decisoes/`.
 - Ao terminar: rode testes e lint, marque a caixa da tarefa no `PLANO.md` e liste pendências.
 - Idioma: código com nomes de funções no padrão Verbo-Substantivo aprovado do PowerShell (`Get-`, `Set-`, `New-`, `Test-`, `Invoke-`...) e substantivos em português; comentários, docs e mensagens em português.
 

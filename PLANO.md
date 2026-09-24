@@ -22,7 +22,7 @@ Cada uma vira um ADR em `docs/decisoes/` na T01.
 
 | # | Decisão | Escolha padrão | Motivo |
 |---|---|---|---|
-| D1 | Envio de e-mail | **ACS Email**, autenticado por **Managed Identity** via REST | Sem segredo; domínio gerenciado pelo Azure no `dev`, domínio próprio no `prod` |
+| D1 | Envio de e-mail | **ACS Email**, autenticado por **Managed Identity** via REST | Sem segredo; domínio gerenciado pelo Azure no `dev` — sem custo, sem comprar domínio (só valeria domínio próprio se houvesse `prod`/piloto, fora de escopo por ora, ver ADR 0013) |
 | D2 | Acesso ao Table Storage | **Wrapper REST próprio** (`Invoke-RestMethod`) — sem módulos Az/AzTable | Flex Consumption **não suporta managed dependencies**; zero dependências = pacote simples e testável |
 | D3 | Autenticação | Prod: token da Managed Identity (`IDENTITY_ENDPOINT`). Local: **SharedKey** contra Azurite | Mesmo código nos dois ambientes |
 | D4 | Plano da Function | **Flex Consumption**, PowerShell **7.4**, Linux | Cota gratuita, identidade em tudo. Fallback: Consumption (Windows) |
@@ -34,6 +34,7 @@ Cada uma vira um ADR em `docs/decisoes/` na T01.
 | D10 | Cadastro de A3/Manual no MVP | **CSV + script** `tools/Import-Itens.ps1` | Portal só na Fase 3 |
 | D11 | IaC / CI | Terraform (azurerm 4.x) com state em Storage separado; GitHub Actions com OIDC | Conforme especificação |
 | D12 | Domínios não-.br | RDAP via bootstrap IANA (`https://rdap.org/domain/<d>`); `.br` direto no Registro.br | Cobre clientes com `.com` |
+| D13 | Escopo do projeto | Uso **pessoal/portfólio**, sem piloto pago nem domínio próprio (ver [ADR 0013](docs/decisoes/0013-escopo-pessoal-sem-piloto.md)) | Usuário não vai comprar domínio nem buscar clientes reais; infra fica de pé sob demanda, custo ~zero parada |
 
 ### Regra de marcos (D7–D9) — referência para T02
 
@@ -56,7 +57,7 @@ Nada de código antes disto.
 - [x] **M0.3** Conta GitHub e repositório **privado** `monitor-vencimentos` (vazio). — Criado em 2026-09-22: https://github.com/brunokdalcastel/monitor-vencimentos (privado); histórico local (T01+T02) enviado para `origin/master`.
 - [x] **M0.4** Instalar localmente: PowerShell 7.4+, Azure Functions Core Tools v4, Azurite (`npm i -g azurite`), Terraform ≥ 1.9, Azure CLI, Git, Pester 5 e PSScriptAnalyzer (`Install-Module Pester, PSScriptAnalyzer -Scope CurrentUser`). — Confirmado em 2026-09-22: PowerShell 7.4.20, Git 2.52.0, Terraform 1.14.3, Azure CLI 2.80.0, Azure Functions Core Tools 4.15.0, Azurite 3.37.0, Pester 5.9.1, PSScriptAnalyzer 1.25.0. Pester/PSScriptAnalyzer instalados no módulo do Windows PowerShell 5.1; se necessário no 7.4, rodar `Install-Module` novamente dentro do `pwsh`.
 - [ ] **M0.5** Revisar a tabela de decisões acima e ajustar o que quiser.
-- [ ] **M0.6** (pode esperar até o prod) Domínio próprio para envio de e-mail.
+- [x] **M0.6** ~~Domínio próprio para envio de e-mail~~ — fora de escopo (ver ADR 0013, 2026-09-25): `dev` usa o domínio gerenciado pelo Azure no ACS, sem custo.
 
 ---
 
@@ -145,8 +146,8 @@ Nada de código antes disto.
 ### T09 — Terraform do ambiente `dev`
 **Entrega:**
 - `infra/bootstrap/` — RG + Storage para o state do Terraform + App Registration/identidade com **federated credential** do GitHub (OIDC) e papéis mínimos. Executado uma vez manualmente.
-- `infra/` — RG, Storage Account (sem acesso por chave compartilhada no prod: `shared_access_key_enabled = false`), tabelas `Itens`, `Verificacoes`, `AlertasEnviados`, `Clientes`, container de deploy do Flex; Function App Flex Consumption (PowerShell 7.4, identidade atribuída pelo sistema); Log Analytics + Application Insights com **limite diário de ingestão**; Key Vault (RBAC); ACS + Email Communication Service + domínio gerenciado pelo Azure (`dev`) + associação; atribuições de papel (Storage Table Data Contributor, Storage Blob Data Owner para o deploy, papel de envio no ACS, Key Vault Secrets User); Budget do RG; alerta do Azure Monitor para falha da função.
-- `environments/dev.tfvars` e `prod.tfvars`.
+- `infra/` — RG, Storage Account (sem acesso por chave compartilhada: `shared_access_key_enabled = false` — a Function usa Managed Identity mesmo em `dev`, ver D3), tabelas `Itens`, `Verificacoes`, `AlertasEnviados`, `Clientes`, container de deploy do Flex; Function App Flex Consumption (PowerShell 7.4, identidade atribuída pelo sistema); Log Analytics + Application Insights com **limite diário de ingestão** (mantém dentro do tier sempre gratuito de 5GB/mês); Key Vault (RBAC); ACS + Email Communication Service + domínio gerenciado pelo Azure (sem custo, sem comprar domínio — ver ADR 0013); atribuições de papel (Storage Table Data Contributor, Storage Blob Data Owner para o deploy, papel de envio no ACS, Key Vault Secrets User); Budget do RG; alerta do Azure Monitor para falha da função.
+- `environments/dev.tfvars` (só `dev` — ver ADR 0013: sem plano de `prod`/piloto por enquanto).
 **Antes de codar:** confirmar disponibilidade do Flex Consumption + PowerShell 7.4 na região (D5) e o papel de menor privilégio para envio via ACS com Entra ID.
 **Aceite:** `terraform fmt -check` e `terraform validate` ok; `terraform plan` limpo com `dev.tfvars`. **[HUMANO]** rodar `bootstrap` e o primeiro `apply`.
 
@@ -159,18 +160,19 @@ Nada de código antes disto.
 **Aceite:** alguém que não conhece o projeto consegue subir localmente e cadastrar um item só lendo o README.
 
 ### T12 — Deploy em dev e teste real [HUMANO + Sonnet]
-- [ ] Deploy via pipeline; cadastrar seus próprios itens (seu domínio, seu site, um A3 com data fictícia próxima).
+- [ ] Deploy via pipeline; cadastrar alguns itens de teste (domínios/sites públicos ou seus, um `Manual`/`CertA3` com data fictícia próxima — nada disso exige comprar nada).
 - [ ] Ajustar datas para disparar cada marco e conferir recebimento, entrega fora do spam e deduplicação.
-- [ ] Deixar rodando 7 dias e conferir o resumo diário do admin.
+- [ ] Deixar rodando alguns dias e conferir o resumo diário do admin.
 
-### Piloto (30 dias) [HUMANO]
+### Piloto (30 dias) — fora de escopo por ora (ver ADR 0013)
+> Decisão de 2026-09-25: o projeto fica de uso pessoal/portfólio, sem meta de clientes pagantes nem domínio próprio. A infra (`dev`) fica de pé sob demanda, sem custo relevante quando parada. Esta seção fica registrada como possibilidade futura, não como próximo passo.
 - [ ] 2–3 clientes com permissão por escrito; montar o CSV de cada um; definir destinatários.
-- [ ] Ambiente `prod` (mesmo Terraform com `prod.tfvars`) + domínio próprio no ACS com SPF, DKIM e DMARC.
+- [ ] Ambiente `prod` + domínio próprio no ACS com SPF, DKIM e DMARC.
 - [ ] Coletar feedback: utilidade dos marcos, clareza do e-mail, itens que faltaram.
 
 ---
 
-## Fase 2 — Agente A1 (detalhar após o piloto)
+## Fase 2 — Agente A1 (opcional, sem dependência do Piloto)
 
 > **Premissa (confirmada em 2026-09-22):** não teremos acesso remoto às máquinas dos clientes onde o certificado A1 está instalado. Por isso o agente precisa ser autoinstalável — o cliente (ou o TI dele) executa o instalador (T23) uma vez, e daí em diante só há tráfego de saída da máquina dele para a API (T21). Nenhuma tarefa desta fase pode assumir acesso direto/remoto a essas máquinas.
 
@@ -179,11 +181,11 @@ Nada de código antes disto.
 - **T22** Agente `agent/Coletar-CertificadosA1.ps1` compatível com **PowerShell 5.1**: lê `Cert:\CurrentUser\My` e `Cert:\LocalMachine\My`, filtra emissores ICP-Brasil (lista configurável), envia só metadados; log local; nunca exporta chave privada.
 - **T23** Instalador `agent/Instalar-Agente.ps1` (tarefa agendada diária + no logon, para pegar o repositório do usuário) e desinstalador.
 - **T24** Tratamento de A1 que sumiu da máquina (renovado ou removido) e testes.
-- **[HUMANO]** Levantar a lista de ACs ICP-Brasil usadas pelos clientes do piloto e as versões de Windows.
+- **[HUMANO]** Se for testar de verdade: levantar a lista de ACs ICP-Brasil dos próprios certificados (mesmo sem piloto, dá pra testar com certificados do próprio usuário) e as versões de Windows-alvo.
 
-## Fase 3 — Produto (detalhar após a Fase 2)
+## Fase 3 — Produto — fora de escopo (ver ADR 0013)
 
-Multi-tenant por `ClienteId` com validação em toda a API → portal em Static Web Apps (auth Entra External ID) → canais Teams/WhatsApp → relatório mensal → cobrança e planos. Pré-requisitos **[HUMANO]**: forma jurídica (contador), termos de uso e política de privacidade, nome (INPI + domínio), meio de cobrança, pesquisa de preço com 3–5 clientes.
+Multi-tenant por `ClienteId` com validação em toda a API → portal em Static Web Apps (auth Entra External ID) → canais Teams/WhatsApp → relatório mensal → cobrança e planos. Pré-requisitos **[HUMANO]**: forma jurídica (contador), termos de uso e política de privacidade, nome (INPI + domínio), meio de cobrança, pesquisa de preço com 3–5 clientes. Dependia do Piloto (agora fora de escopo) — fica registrada só como referência de até onde o desenho original ia.
 
 ---
 
@@ -191,7 +193,9 @@ Multi-tenant por `ClienteId` com validação em toda a API → portal em Static 
 
 ```
 M0 → T01 → T02 → T03 ┐
-                T04 ┘→ T05 → T06 → T07 → T08 → T09 → T10 → T11 → T12 → Piloto → Fase 2
+                T04 ┘→ T05 → T06 → T07 → T08 → T09 → T10 → T11 → T12 → (fim do escopo ativo)
 ```
+
+Piloto e Fase 3 ficam fora do escopo ativo (ver ADR 0013). Fase 2 (agente A1) é opcional/futura, sem depender do Piloto.
 
 T11 pode ser escrito aos poucos a partir da T08.
