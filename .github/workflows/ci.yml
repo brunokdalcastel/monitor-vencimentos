@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  lint-e-testes:
+    name: Lint e testes (PowerShell 7 e Windows PowerShell 5.1)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser
+          $resultados = Invoke-ScriptAnalyzer -Path ./src, ./agent, ./tools -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          if ($resultados) {
+            $resultados | Format-Table -AutoSize | Out-String | Write-Host
+            throw "PSScriptAnalyzer encontrou $($resultados.Count) apontamento(s)."
+          }
+
+      - name: Pester (PowerShell 7)
+        shell: pwsh
+        run: |
+          Install-Module Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          Import-Module Pester -MinimumVersion 5.0.0 -Force
+          Invoke-Pester ./tests -ExcludeTag Integration -CI
+
+      - name: Pester (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          Install-Module Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          Import-Module Pester -MinimumVersion 5.0.0 -Force
+          Invoke-Pester ./tests -ExcludeTag Integration -CI
+
+  terraform:
+    name: Terraform fmt / validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.3"
+
+      - name: terraform fmt
+        working-directory: infra
+        run: terraform fmt -check -recursive
+
+      - name: terraform validate (infra)
+        working-directory: infra
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: terraform validate (bootstrap)
+        working-directory: infra/bootstrap
+        run: |
+          terraform init -input=false
+          terraform validate

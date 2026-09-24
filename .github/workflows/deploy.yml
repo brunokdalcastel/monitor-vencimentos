@@ -1,0 +1,69 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "src/**"
+      - "infra/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch: {}
+
+# id-token: write — exigido pra Azure AD emitir o token OIDC (login sem segredo, D11).
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy (dev)
+    runs-on: ubuntu-latest
+    # Environment "dev" com aprovação manual (configurar no GitHub — ver T10 no
+    # PLANO.md): o job para aqui até alguém aprovar, antes de tocar em qualquer coisa.
+    environment: dev
+    env:
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_USE_OIDC: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.3"
+
+      - name: Terraform apply
+        working-directory: infra
+        run: |
+          terraform init -input=false
+          terraform apply -input=false -auto-approve -var-file=environments/dev.tfvars
+
+      - name: Nome da Function App (saída do Terraform)
+        id: infra
+        working-directory: infra
+        run: echo "function_app_name=$(terraform output -raw function_app_name)" >> "$GITHUB_OUTPUT"
+
+      # Monta o pacote com modules/ DENTRO do zip, ao lado de profile.ps1 — o zip vira
+      # a raiz do site (wwwroot), então a referência local "../modules" (functions/ e
+      # modules/ como pastas irmãs no repositório) não existiria mais depois do deploy.
+      # profile.ps1 já sabe procurar nos dois lugares (ver T10 no PLANO.md).
+      - name: Empacotar a Function
+        shell: pwsh
+        run: |
+          $staging = 'staging'
+          New-Item -ItemType Directory -Path $staging -Force | Out-Null
+          Copy-Item -Path src/functions/* -Destination $staging -Recurse -Force -Exclude 'local.settings.json*'
+          Copy-Item -Path src/modules -Destination (Join-Path $staging 'modules') -Recurse -Force
+          Compress-Archive -Path "$staging/*" -DestinationPath deploy.zip -Force
+
+      - uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ steps.infra.outputs.function_app_name }}
+          package: deploy.zip

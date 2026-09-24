@@ -30,6 +30,9 @@ terraform.rc
 # Saída local de e-mails (T06 - EMAIL_MODO=Arquivo)
 saida-emails/
 
+# Resultado de teste do Pester (Invoke-Pester -CI gera isso; ver T10)
+testResults.xml
+
 # Azure Functions Core Tools
 bin/
 obj/
