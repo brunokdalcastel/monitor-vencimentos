@@ -31,13 +31,50 @@ Veja o diagrama e os componentes em [`docs/arquitetura.md`](docs/arquitetura.md)
 
 ## Rodando localmente
 
-> Passo a passo detalhado será adicionado na T08/T11. Pré-requisitos: PowerShell 7.4+, Azure Functions Core Tools v4, Azurite, Pester 5, PSScriptAnalyzer.
+Pré-requisitos: PowerShell 7.4+, [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local), [Azurite](https://github.com/Azure/Azurite) (`npm install -g azurite`), Pester 5, PSScriptAnalyzer.
+
+1. Suba o Azurite, crie as tabelas e importe o inventário de exemplo (um atalho para os três passos):
+   ```powershell
+   ./tools/Start-Local.ps1
+   ```
+   (Sobe o Azurite completo — blob/queue em portas alternativas 11000/11001 para não brigar
+   com outra instância já rodando na máquina, tabelas na porta padrão 10002 — cria as
+   tabelas `Itens`, `Verificacoes`, `AlertasEnviados`, `Clientes` e importa
+   `tools/itens-exemplo.csv`.)
+
+2. Copie o arquivo de configuração local (nunca versionado — contém a chave pública e
+   conhecida do Azurite, não um segredo de produção):
+   ```powershell
+   copy src\functions\local.settings.json.example src\functions\local.settings.json
+   ```
+
+3. Suba a Function:
+   ```powershell
+   func start --script-root src/functions
+   ```
+   > Se aparecer `You must install or update .NET to run this application` porque só há
+   > .NET 9/10 instalado (o worker do PowerShell 7.4 do Core Tools pede 8.0): rode com
+   > `$env:DOTNET_ROLL_FORWARD='LatestMajor'; func start --script-root src/functions`.
+
+4. O timer só dispara às 08:00 (horário de Brasília, ver ADR 0006). Para forçar uma
+   execução imediata, com o `func start` já rodando, em outro terminal:
+   ```powershell
+   curl -X POST http://localhost:7071/admin/functions/VerificacaoDiaria -H "Content-Type: application/json" -d '{}'
+   ```
+
+5. Os e-mails aparecem (não são enviados de verdade — `EMAIL_MODO=Arquivo`) em
+   `src/functions/saida-emails/` como `.html`. Abra um no navegador para conferir.
+
+Para cadastrar seus próprios itens, edite `tools/itens-exemplo.csv` (ou crie outro CSV com
+as mesmas colunas) e rode `./tools/Import-Itens.ps1 -CaminhoCsv <arquivo>`.
+
+Testes e lint:
 
 ```powershell
 Invoke-Pester ./tests -ExcludeTag Integration
-Invoke-ScriptAnalyzer -Path ./src, ./agent, ./tools -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
-azurite --location .azurite --silent
-func start --script-root src/functions
+Invoke-Pester ./tests -Tag Integration    # precisa do Azurite rodando (e de rede, para SSL/RDAP)
+Invoke-ScriptAnalyzer -Path ./src -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+Invoke-ScriptAnalyzer -Path ./tools -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
 ```
 
 ## Segurança e privacidade
@@ -64,6 +101,7 @@ monitor-vencimentos/
 │   │   └── ReceberAgente/       # HTTP trigger (fase 2)
 │   └── modules/                 # funções PowerShell compartilhadas
 ├── agent/                   # script do agente A1 + instalador (fase 2)
+├── tools/                   # Import-Itens.ps1, Start-Local.ps1, itens-exemplo.csv
 ├── tests/                   # Pester
 └── .github/workflows/       # lint (PSScriptAnalyzer), testes, deploy
 ```

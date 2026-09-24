@@ -1,0 +1,5 @@
+ClienteId,ItemId,Tipo,Alvo,Descricao,Titular,DataVencimento,ContatosAlerta,Ativo
+cliente-exemplo,item-ssl-1,SSL,www.google.com,"Certificado SSL de exemplo (site público, sempre válido)",,,contato@exemplo.com,true
+cliente-exemplo,item-dominio-1,Dominio,google.com,Domínio de exemplo (público),,,contato@exemplo.com,true
+cliente-exemplo,item-a3-1,CertA3,e-CNPJ A3 - Diretoria,Certificado digital e-CNPJ A3 do titular,Empresa Exemplo LTDA,2026-10-01,contato@exemplo.com;financeiro@exemplo.com,true
+cliente-exemplo,item-manual-1,Manual,Alvará de Funcionamento,Alvará municipal renovado anualmente,,2026-09-20,contato@exemplo.com,true
