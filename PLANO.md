@@ -104,10 +104,15 @@ Nada de código antes disto.
 - 144 testes no total (109 da T02–T04 + 6 em `Identidade.Tests.ps1` + 23 em `Storage.Tests.ps1` + 6 em `tests/Integration/Storage.Tests.ps1`) verdes em Windows PowerShell 5.1 e PowerShell 7.4, unitários e de integração real contra o Azurite; `ScriptAnalyzer` sem apontamentos.
 - Versão da API de tabelas usada: `2020-12-06` (compatível com o Azurite 3.37 instalado no M0.4).
 
-### T06 — Envio de e-mail (ACS)
+### T06 — Envio de e-mail (ACS) ✅ Concluída (2026-09-24)
 **Funções:** `Send-EmailAcs -Para -Assunto -Html -Texto` (REST `POST {endpoint}/emails:send?api-version=2023-03-31`, token do recurso `https://communication.azure.com`, acompanhar `Operation-Location` até `Succeeded`), `New-EmailAlerta -Contato -Itens` (monta HTML + texto puro, agrupado por urgência: vencidos → 0 → 7 → 15 → 30), `New-EmailResumoAdmin`.
 **Modo local:** `EMAIL_MODO=Arquivo` grava o `.html` em `./saida-emails/` em vez de enviar.
 **Aceite:** testes do template (itens ordenados, datas em `dd/MM/yyyy`, escape HTML de campos do usuário); testes do envio com mock; e-mail renderizado revisado visualmente.
+**Pendências:** implementado em `src/modules/Email/Email.psm1` (+ `.psd1`), reaproveitando `Get-TokenAcesso` do módulo Identidade (T05) para o recurso `https://communication.azure.com`. Como ainda não existe recurso ACS real (infra só na T09), não há teste de integração contra o Azure de verdade nesta tarefa — `Send-EmailAcs` é testado 100% com mocks (envio, `Operation-Location` em `Running`→`Succeeded`, `Failed`, timeout, cabeçalho ausente); o modo `EMAIL_MODO=Arquivo` já é testado de verdade (escreve arquivo em disco). E-mails de exemplo gerados em modo Arquivo e revisados visualmente no Chrome (servidos por um HTTP estático local, já que a extensão não abre `file://`) — tabelas, agrupamento por urgência e escape de HTML (`<script>`, `<img onerror>`, aspas) todos corretos.
+- Decisões de variáveis de ambiente não detalhadas no texto da tarefa (`ADR` não exigido — não contraria D1–D12, é só configuração): `ACS_ENDPOINT` (base do recurso ACS), `ACS_REMETENTE` (endereço remetente verificado), `EMAIL_SAIDA_DIR` (override opcional do diretório do modo Arquivo, padrão `./saida-emails`).
+- `New-EmailResumoAdmin` não tinha assinatura exata no PLANO.md — implementada como `-Data -TotalItensVerificados -AlertasEnviados -Falhas` (`AlertasEnviados`: objetos com `Contato`/`TotalItens`; `Falhas`: objetos com `Tipo`/`Alvo`/`Erro`). A T07 (orquestrador) é quem efetivamente vai montar essas listas; o contrato pode precisar de ajuste fino quando ela for implementada.
+- `ConvertTo-TextoHtmlSeguro` (escapa com `System.Net.WebUtility.HtmlEncode`, cross-version sem dependência de `System.Web`) é usada em todo campo de cadastro que entra no HTML: `Alvo` dos itens, `Contato` no rodapé do alerta, `Alvo`/`Erro`/`Tipo` das falhas no resumo do admin.
+- 173 testes no total (152 da T02–T05 + 21 em `Email.Tests.ps1`, todos unitários/mockados) verdes em Windows PowerShell 5.1 e PowerShell 7.4; `ScriptAnalyzer` sem apontamentos (supressões documentadas no código: `New-EmailAlerta`/`New-EmailResumoAdmin` não mudam estado, `Send-EmailAcs` não é plural — nomes fixados pelo PLANO.md).
 
 ### T07 — Orquestrador da verificação diária
 **Função:** `Invoke-VerificacaoDiaria -Hoje` (em `src/modules`; a Function só chama ela).
