@@ -23,11 +23,14 @@ Veja o diagrama e os componentes em [`docs/arquitetura.md`](docs/arquitetura.md)
 
 ## Stack
 
-- Azure Functions (Flex Consumption, Linux) em PowerShell 7.4.
+- Azure Functions (Flex Consumption, Linux) em PowerShell 7.6 (ver [ADR 0014](docs/decisoes/0014-powershell-76-no-flex.md)).
 - Azure Table Storage (acesso via REST, sem módulos Az/AzTable).
-- Azure Communication Services — Email.
+- Azure Communication Services — Email, com domínio gerenciado pelo Azure (sem custo, sem domínio próprio — ver [ADR 0013](docs/decisoes/0013-escopo-pessoal-sem-piloto.md)).
 - Terraform (`azurerm` 4.x) para toda a infraestrutura.
 - GitHub Actions com OIDC para CI/CD.
+
+Projeto de uso pessoal/portfólio (D13): só existe ambiente `dev`, sem custo relevante
+enquanto a infra está parada — ver [`infra/README.md`](infra/README.md) para subir/derrubar.
 
 ## Rodando localmente
 
@@ -91,10 +94,10 @@ monitor-vencimentos/
 │   ├── decisoes/            # ADRs (registro de decisões)
 │   ├── especificacao.md
 │   └── privacidade.md
-├── infra/                   # Terraform
-│   ├── main.tf
-│   ├── variables.tf
-│   └── environments/{dev,prod}.tfvars
+├── infra/                   # Terraform (só `dev` — ver ADR 0013)
+│   ├── bootstrap/           # state + identidade OIDC do GitHub Actions (manual, 1x)
+│   ├── *.tf                 # storage, function, email (ACS), observabilidade, budget...
+│   └── environments/dev.tfvars
 ├── src/
 │   ├── functions/
 │   │   ├── VerificacaoDiaria/   # timer trigger

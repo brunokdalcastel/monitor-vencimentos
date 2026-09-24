@@ -25,7 +25,7 @@ Cada uma vira um ADR em `docs/decisoes/` na T01.
 | D1 | Envio de e-mail | **ACS Email**, autenticado por **Managed Identity** via REST | Sem segredo; domínio gerenciado pelo Azure no `dev` — sem custo, sem comprar domínio (só valeria domínio próprio se houvesse `prod`/piloto, fora de escopo por ora, ver ADR 0013) |
 | D2 | Acesso ao Table Storage | **Wrapper REST próprio** (`Invoke-RestMethod`) — sem módulos Az/AzTable | Flex Consumption **não suporta managed dependencies**; zero dependências = pacote simples e testável |
 | D3 | Autenticação | Prod: token da Managed Identity (`IDENTITY_ENDPOINT`). Local: **SharedKey** contra Azurite | Mesmo código nos dois ambientes |
-| D4 | Plano da Function | **Flex Consumption**, PowerShell **7.4**, Linux | Cota gratuita, identidade em tudo. Fallback: Consumption (Windows) |
+| D4 | Plano da Function | **Flex Consumption**, PowerShell **7.6** (revisado, ver [ADR 0014](docs/decisoes/0014-powershell-76-no-flex.md); era 7.4), Linux | Cota gratuita, identidade em tudo. 7.4 no Flex vence em 10/nov/2026. Fallback: Consumption (Windows) |
 | D5 | Região | **Brazil South** (validar disponibilidade do Flex na T09; fallback East US 2) | Dados no Brasil é argumento de venda |
 | D6 | Horário | Timer `0 0 11 * * *` (UTC) = **08:00 BRT**; cálculo de dias no fuso `America/Sao_Paulo` | Flex/Linux não aceita `WEBSITE_TIME_ZONE` |
 | D7 | Alertas | **Um e-mail consolidado por contato por dia** (não um por item) | Menos ruído, menos custo |
@@ -35,6 +35,7 @@ Cada uma vira um ADR em `docs/decisoes/` na T01.
 | D11 | IaC / CI | Terraform (azurerm 4.x) com state em Storage separado; GitHub Actions com OIDC | Conforme especificação |
 | D12 | Domínios não-.br | RDAP via bootstrap IANA (`https://rdap.org/domain/<d>`); `.br` direto no Registro.br | Cobre clientes com `.com` |
 | D13 | Escopo do projeto | Uso **pessoal/portfólio**, sem piloto pago nem domínio próprio (ver [ADR 0013](docs/decisoes/0013-escopo-pessoal-sem-piloto.md)) | Usuário não vai comprar domínio nem buscar clientes reais; infra fica de pé sob demanda, custo ~zero parada |
+| D14 | Versão do PowerShell na Function | **7.6**, não 7.4 (ver [ADR 0014](docs/decisoes/0014-powershell-76-no-flex.md)) | 7.4 no Flex Consumption vence em 10/nov/2026 (checado antes de codar a T09) |
 
 ### Regra de marcos (D7–D9) — referência para T02
 
@@ -143,13 +144,21 @@ Nada de código antes disto.
 - Rodei o fluxo completo de verdade: `Start-Local.ps1` → `func start --script-root src/functions` → `POST /admin/functions/VerificacaoDiaria` → 4 itens verificados (SSL real contra `www.google.com`, RDAP real contra `google.com`, `CertA3` e `Manual` com data cadastrada) → 2 alertas + 1 resumo ao admin gerados em `saida-emails/` → reexecução no mesmo dia corretamente sem duplicar (0 novos alertas, só o resumo do admin de novo).
 - `PSMissingModuleManifestField` no `requirements.psd1`: falso positivo conhecido do ScriptAnalyzer (confunde o arquivo de dependências do worker do Functions com um manifesto de módulo real) — não suprimível por comentário nem atributo sem quebrar o arquivo (precisa continuar sendo só uma hashtable pura, sem `param()`); é o único apontamento que sobra no `Invoke-ScriptAnalyzer -Path ./src`, documentado aqui.
 
-### T09 — Terraform do ambiente `dev`
+### T09 — Terraform do ambiente `dev` ✅ Concluída (2026-09-25)
 **Entrega:**
 - `infra/bootstrap/` — RG + Storage para o state do Terraform + App Registration/identidade com **federated credential** do GitHub (OIDC) e papéis mínimos. Executado uma vez manualmente.
 - `infra/` — RG, Storage Account (sem acesso por chave compartilhada: `shared_access_key_enabled = false` — a Function usa Managed Identity mesmo em `dev`, ver D3), tabelas `Itens`, `Verificacoes`, `AlertasEnviados`, `Clientes`, container de deploy do Flex; Function App Flex Consumption (PowerShell 7.4, identidade atribuída pelo sistema); Log Analytics + Application Insights com **limite diário de ingestão** (mantém dentro do tier sempre gratuito de 5GB/mês); Key Vault (RBAC); ACS + Email Communication Service + domínio gerenciado pelo Azure (sem custo, sem comprar domínio — ver ADR 0013); atribuições de papel (Storage Table Data Contributor, Storage Blob Data Owner para o deploy, papel de envio no ACS, Key Vault Secrets User); Budget do RG; alerta do Azure Monitor para falha da função.
 - `environments/dev.tfvars` (só `dev` — ver ADR 0013: sem plano de `prod`/piloto por enquanto).
 **Antes de codar:** confirmar disponibilidade do Flex Consumption + PowerShell 7.4 na região (D5) e o papel de menor privilégio para envio via ACS com Entra ID.
 **Aceite:** `terraform fmt -check` e `terraform validate` ok; `terraform plan` limpo com `dev.tfvars`. **[HUMANO]** rodar `bootstrap` e o primeiro `apply`.
+**Pendências:**
+- **PowerShell 7.4 → 7.6** (ver D14/ADR 0014): checando a disponibilidade antes de codar, achei que o Flex Consumption só suporta 7.4 até 10/nov/2026 — troquei para 7.6 (padrão atual, suporte até 2028), aprovado com o usuário.
+- **`infra/bootstrap/` cria o RG de `dev` vazio** (não a `infra/` principal, que só referencia via `data "azurerm_resource_group"`) — de propósito, pra dar `Contributor` + `Role Based Access Control Administrator` pro GitHub Actions só nesse RG, nunca na assinatura inteira. `Role Based Access Control Administrator` (não `User Access Administrator`) porque não permite a identidade se autoelevar.
+- **Backend do state sem chave**: `use_azuread_auth = true` no `backend.tf` — nem a autenticação da automação usa `shared_access_key_enabled`, consistente com D3 em tudo, não só no workload.
+- **Três pontos não confirmáveis sem os recursos existirem de verdade** (`terraform validate` não pega isso — é validação de negócio da API, não de schema), documentados em `infra/README.md` para o primeiro `apply`: (1) se `"AzureManagedDomain"` é mesmo o nome aceito pelo `azurerm_email_communication_service_domain` com `domain_management = "AzureManaged"`; (2) se `from_sender_domain` (usado para montar `ACS_REMETENTE`) é o atributo certo, ao invés de `mail_from_sender_domain`; (3) **o mais importante**: `az role definition list` mostra que **"Communication and Email Service Owner"** é o único papel embutido do Azure para Communication/Email Services — e suas `dataActions` vêm **vazias**, o que é estranho para uma role pensada pra autorizar envio via Entra ID. Pode ser que a ACS não valide por `dataActions` clássicas (mecanismo próprio do serviço) — só dá pra confirmar rodando de verdade após o primeiro `apply`. Se o envio falhar por permissão, esse é o primeiro lugar a investigar.
+- **Budget duplo, de propósito**: além do budget de assinatura já configurado manualmente (M0.2), a T09 cria um budget só do RG de `dev` (granularidade menor, mesmos alertas 50/80/100%).
+- Convenção de nomes: prefixo `mvenc` (monitor-vencimentos) — nomes de Storage Account/Key Vault levam um sufixo aleatório (`random_string`) porque precisam ser globalmente únicos.
+- Validado com `terraform fmt` e `terraform validate` (schema real do provider, baixado do registry) nos dois diretórios (`bootstrap/` e principal) — verde nos dois. `terraform plan` da `infra/` principal **não dá pra rodar de verdade ainda**: o backend remoto só existe depois que o bootstrap for aplicado (dependência de ordem inerente, não um problema de configuração) — é o primeiro comando que o humano roda depois do `apply` do bootstrap.
 
 ### T10 — CI/CD (GitHub Actions)
 **Entrega:** `.github/workflows/ci.yml` (PR e push: PSScriptAnalyzer, Pester sem tag `Integration`, `terraform fmt/validate`) e `deploy.yml` (push na `main` ou manual: `azure/login` via OIDC → `terraform apply` → zip de `src/functions` + módulos → `Azure/functions-action`).
