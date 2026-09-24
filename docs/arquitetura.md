@@ -1,6 +1,6 @@
 # Arquitetura
 
-> Diagrama e componentes copiados da seção 3 de [`especificacao.md`](especificacao.md). Decisões de projeto associadas estão em [`decisoes/`](decisoes/) (ADRs 0001–0012).
+> Diagrama e componentes copiados da seção 3 de [`especificacao.md`](especificacao.md). Decisões de projeto associadas estão em [`decisoes/`](decisoes/) (ADRs 0001 em diante).
 
 ## Visão geral
 
@@ -20,13 +20,13 @@
 
 | Recurso | Uso | Observação |
 |---|---|---|
-| Resource Group | Agrupar tudo | Um por ambiente (dev/prod) |
-| Storage Account | Table Storage (inventário, resultados, log) + armazenamento da Function | Custo de centavos |
-| Function App (Flex Consumption) | Verificações e API | PowerShell 7.4, Linux — ver [ADR 0004](decisoes/0004-plano-da-function.md) |
-| Key Vault | Segredos (chaves de API, credenciais de envio de e-mail) | Function acessa via Managed Identity |
-| Azure Communication Services — Email | Envio de alertas | Ver [ADR 0001](decisoes/0001-envio-de-email.md) |
+| Resource Group | Agrupar tudo | Só `dev` — sem `prod`/piloto por ora (ver [ADR 0013](decisoes/0013-escopo-pessoal-sem-piloto.md)) |
+| Storage Account | Table Storage (inventário, resultados, log) + armazenamento da Function | Custo de centavos; sem chave de acesso (`shared_access_key_enabled = false`) |
+| Function App (Flex Consumption) | Verificações e API | PowerShell 7.6, Linux — ver [ADR 0014](decisoes/0014-powershell-76-no-flex.md) (revisão da D4) |
+| Key Vault | Provisionado (RBAC), reservado para uso futuro | Nada usa hoje — o projeto é sem-segredo, tudo via Managed Identity |
+| Azure Communication Services — Email | Envio de alertas | Domínio gerenciado pelo Azure, sem custo/sem domínio próprio — ver [ADR 0001](decisoes/0001-envio-de-email.md) e [ADR 0013](decisoes/0013-escopo-pessoal-sem-piloto.md) |
 | Application Insights | Logs e falhas | Limite diário de ingestão para não gerar custo |
-| Static Web Apps (fase 3) | Portal do cliente | Plano gratuito para começar |
+| Static Web Apps (fase 3) | Portal do cliente | Fora de escopo por ora (ver [ADR 0013](decisoes/0013-escopo-pessoal-sem-piloto.md)) |
 
 ## Fluxo de dados
 

@@ -68,8 +68,31 @@ Pré-requisitos: PowerShell 7.4+, [Azure Functions Core Tools v4](https://learn.
 5. Os e-mails aparecem (não são enviados de verdade — `EMAIL_MODO=Arquivo`) em
    `src/functions/saida-emails/` como `.html`. Abra um no navegador para conferir.
 
-Para cadastrar seus próprios itens, edite `tools/itens-exemplo.csv` (ou crie outro CSV com
-as mesmas colunas) e rode `./tools/Import-Itens.ps1 -CaminhoCsv <arquivo>`.
+### Cadastrar um item
+
+Edite `tools/itens-exemplo.csv` (ou crie outro CSV com as mesmas colunas) e rode:
+
+```powershell
+./tools/Import-Itens.ps1 -CaminhoCsv ./tools/itens-exemplo.csv
+```
+
+Colunas do CSV:
+
+| Coluna | Obrigatório | Exemplo |
+|---|---|---|
+| `ClienteId` | sim | `cliente1` |
+| `ItemId` | sim | `item-ssl-1` |
+| `Tipo` | sim | `SSL`, `Dominio`, `CertA3` ou `Manual` |
+| `Alvo` | sim | `www.exemplo.com` (SSL), `exemplo.com.br` (Dominio), ou uma descrição livre (`CertA3`/`Manual`) |
+| `Descricao`, `Titular` | não | texto livre |
+| `DataVencimento` | só para `CertA3`/`Manual` | `2026-12-15` (`yyyy-MM-dd`) — `SSL`/`Dominio` descobrem sozinhos |
+| `ContatosAlerta` | sim | `voce@exemplo.com` (ou `a@x.com;b@x.com` para vários) |
+| `Ativo` | não (padrão `true`) | `true`/`false` |
+
+Depois de importar, rode de novo o `func start` (passo 3 acima) ou dispare a
+verificação manualmente (passo 4) para ver o item sendo checado. Mais operações do
+dia a dia (trocar contato, reprocessar, investigar falha) estão em
+[`docs/runbook.md`](docs/runbook.md).
 
 Testes e lint:
 
@@ -82,7 +105,7 @@ Invoke-ScriptAnalyzer -Path ./tools -Recurse -Settings ./PSScriptAnalyzerSetting
 
 ## Segurança e privacidade
 
-Consulte [`docs/privacidade.md`](docs/privacidade.md) (a ser criado na T11) e a seção "Segurança (inegociável)" em [`CLAUDE.md`](CLAUDE.md).
+Consulte [`docs/privacidade.md`](docs/privacidade.md) (dados coletados, finalidade, retenção, LGPD) e a seção "Segurança (inegociável)" em [`CLAUDE.md`](CLAUDE.md). Operações do dia a dia (cadastrar/trocar/investigar) estão em [`docs/runbook.md`](docs/runbook.md).
 
 ## Estrutura do repositório
 
@@ -93,7 +116,8 @@ monitor-vencimentos/
 │   ├── arquitetura.md
 │   ├── decisoes/            # ADRs (registro de decisões)
 │   ├── especificacao.md
-│   └── privacidade.md
+│   ├── privacidade.md
+│   └── runbook.md
 ├── infra/                   # Terraform (só `dev` — ver ADR 0013)
 │   ├── bootstrap/           # state + identidade OIDC do GitHub Actions (manual, 1x)
 │   ├── *.tf                 # storage, function, email (ACS), observabilidade, budget...
