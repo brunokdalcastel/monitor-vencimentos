@@ -12,25 +12,15 @@ resource "azurerm_storage_account" "main" {
   tags                       = var.tags
 }
 
-resource "azurerm_storage_table" "itens" {
-  name               = "Itens"
-  storage_account_id = azurerm_storage_account.main.id
-}
-
-resource "azurerm_storage_table" "verificacoes" {
-  name               = "Verificacoes"
-  storage_account_id = azurerm_storage_account.main.id
-}
-
-resource "azurerm_storage_table" "alertas_enviados" {
-  name               = "AlertasEnviados"
-  storage_account_id = azurerm_storage_account.main.id
-}
-
-resource "azurerm_storage_table" "clientes" {
-  name               = "Clientes"
-  storage_account_id = azurerm_storage_account.main.id
-}
+# As tabelas (Itens, Verificacoes, AlertasEnviados, Clientes) NÃO são gerenciadas aqui
+# de propósito — descoberto no primeiro apply real (ver Pendências da T12 no
+# PLANO.md): o `azurerm_storage_table` sempre tenta ler/gravar a ACL (stored access
+# policy) da tabela em toda operação, e essa API específica do Table Storage nunca
+# suportou Azure AD (só chave) — incompatível com `shared_access_key_enabled = false`
+# (D3), sem contorno no lado do Terraform. `New-TabelaSeNaoExistir` (módulo Storage,
+# T05) já cria as tabelas via REST puro com Managed Identity, sem essa limitação
+# (criar tabela é uma operação diferente de gerenciar ACL) — é chamado no início de
+# toda execução de `Invoke-VerificacaoDiaria` (T07) e por `tools/Import-Itens.ps1`.
 
 # Container de deploy do pacote da Function (Flex Consumption exige blob container
 # próprio, distinto do AzureWebJobsStorage clássico).

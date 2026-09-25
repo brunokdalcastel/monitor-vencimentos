@@ -91,3 +91,14 @@ resource "azurerm_role_assignment" "github_actions_state_storage" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azuread_service_principal.github_actions.object_id
 }
+
+# Quem roda o bootstrap (e depois a infra/ principal) localmente também precisa disso —
+# "Owner"/"Contributor" da assinatura NÃO bastam: são papéis só de controle
+# (`dataActions` vazio), sem acesso de dado ao blob do state. Descoberto na prática no
+# primeiro apply real (ver Pendências da T12 no PLANO.md) quando o `terraform init` da
+# infra/ principal falhou com 403 mesmo sendo Owner da assinatura.
+resource "azurerm_role_assignment" "operador_state_storage" {
+  scope                = azurerm_storage_account.tfstate.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
+}

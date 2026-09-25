@@ -16,20 +16,17 @@ resource "azurerm_email_communication_service" "main" {
 }
 
 # "AzureManagedDomain" é o nome fixo esperado pelo provider para domain_management =
-# "AzureManaged" (não é um nome livre) — não confirmado contra a API real ainda (sem
-# domínio criado até o primeiro apply); se o apply rejeitar esse nome, ver Pendências
-# da T09 no PLANO.md.
+# "AzureManaged" (não é um nome livre) — confirmado contra a API real no primeiro
+# apply (T12).
 resource "azurerm_email_communication_service_domain" "managed" {
   name              = "AzureManagedDomain"
   email_service_id  = azurerm_email_communication_service.main.id
   domain_management = "AzureManaged"
 }
 
-resource "azurerm_email_communication_service_domain_sender_username" "nao_responder" {
-  email_service_domain_id = azurerm_email_communication_service_domain.managed.id
-  name                    = "DoNotReply"
-  display_name            = "Monitor de Vencimentos"
-}
+# Sem recurso próprio pro sender username "DoNotReply": o Azure já cria um
+# automaticamente junto do domínio gerenciado (descoberto no primeiro apply — a
+# criação explícita falhou com "already exists"). Não precisa gerenciar via Terraform.
 
 resource "azurerm_communication_service_email_domain_association" "main" {
   communication_service_id = azurerm_communication_service.main.id

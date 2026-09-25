@@ -49,31 +49,44 @@ resource "azurerm_monitor_action_group" "main" {
   tags = var.tags
 }
 
-resource "azurerm_monitor_metric_alert" "function_failures" {
-  name                = "alert-mvenc-function-failures-${var.environment}"
-  resource_group_name = data.azurerm_resource_group.dev.name
-  scopes              = [azurerm_function_app_flex_consumption.main.id]
-  description         = "A Function App registrou pelo menos uma execução com falha na última hora."
-  severity            = 2
-  frequency           = "PT1H"
-  window_size         = "PT1H"
+# Alerta de falha da função — baseado em log (App Insights), não em métrica de
+# plataforma: o Flex Consumption não expõe "FunctionExecutionCount"/Status como o
+# Consumption clássico (confirmado com `az monitor metrics list-definitions` contra a
+# Function real, já implantada — ver Pendências da T12 no PLANO.md). O texto
+# "Falha [" é o mesmo que run.ps1 grava via Write-Warning pra cada item que falhou
+# (T08) — cada linha vira um `trace` no App Insights.
+resource "azurerm_monitor_scheduled_query_rules_alert_v2" "function_failures" {
+  name                 = "alert-mvenc-function-failures-${var.environment}"
+  resource_group_name  = data.azurerm_resource_group.dev.name
+  location             = data.azurerm_resource_group.dev.location
+  scopes               = [azurerm_log_analytics_workspace.main.id]
+  description          = "A Function App registrou pelo menos uma falha de verificação de item no último dia."
+  severity             = 2
+  evaluation_frequency = "PT6H"
+  window_duration      = "P1D"
+  # A Workspace nasce vazia — a tabela "traces" só existe depois que o App Insights
+  # ingerir alguma telemetria pela primeira vez (a Function ainda não rodou no
+  # primeiro apply). Sem isso, a criação falha com "Failed to resolve table...
+  # traces" (achado na prática — ver Pendências da T12 no PLANO.md).
+  skip_query_validation = true
 
   criteria {
-    metric_namespace = "Microsoft.Web/sites"
-    metric_name      = "FunctionExecutionCount"
-    aggregation      = "Total"
-    operator         = "GreaterThan"
-    threshold        = 0
+    query                   = <<-KQL
+      traces
+      | where message startswith "Falha ["
+    KQL
+    time_aggregation_method = "Count"
+    operator                = "GreaterThan"
+    threshold               = 0
 
-    dimension {
-      name     = "Status"
-      operator = "Include"
-      values   = ["Failure"]
+    failing_periods {
+      minimum_failing_periods_to_trigger_alert = 1
+      number_of_evaluation_periods             = 1
     }
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.main.id
+    action_groups = [azurerm_monitor_action_group.main.id]
   }
 
   tags = var.tags

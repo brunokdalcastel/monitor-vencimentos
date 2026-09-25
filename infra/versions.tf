@@ -20,4 +20,9 @@ provider "azurerm" {
       recover_soft_deleted_key_vaults = true
     }
   }
+
+  # Ver o mesmo comentário em infra/bootstrap/versions.tf — necessário sempre que
+  # algum recurso tem shared_access_key_enabled = false (aqui, o Storage Account
+  # principal, D3).
+  storage_use_azuread = true
 }
