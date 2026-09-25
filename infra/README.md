@@ -41,10 +41,16 @@ funciona dos dois jeitos, sem chave de acesso.
 
 ```powershell
 cd infra
+copy pessoal.auto.tfvars.example pessoal.auto.tfvars   # preencha seu e-mail (fica fora do Git)
+az provider register --namespace Microsoft.Communication  # 1x por assinatura, se ainda não registrado
 terraform init
 terraform plan -var-file=environments/dev.tfvars
 terraform apply -var-file=environments/dev.tfvars
 ```
+
+Deploy do código (sem a esteira): monte o pacote com `modules/` dentro (igual ao
+passo "Empacotar a Function" do `.github/workflows/deploy.yml`) e rode
+`func azure functionapp publish func-mvenc-dev --powershell` de dentro dele.
 
 **Pendências a confirmar no primeiro apply real** (não dava pra verificar sem os
 recursos existirem — ver T09 no `PLANO.md`):

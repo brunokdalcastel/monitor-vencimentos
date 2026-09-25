@@ -19,6 +19,8 @@ __tablestorage__/
 *.tfstate.*
 *.tfplan
 *.tfvars.local
+# Dados pessoais (e-mail do admin etc.) — só o .example vai pro Git
+*.auto.tfvars
 crash.log
 crash.*.log
 override.tf

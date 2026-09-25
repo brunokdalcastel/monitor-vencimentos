@@ -1,0 +1,4 @@
+# Copie para infra/pessoal.auto.tfvars (fora do Git — ver .gitignore) e preencha.
+# O Terraform carrega *.auto.tfvars automaticamente a partir de infra/.
+admin_email           = "voce@exemplo.com"
+budget_contact_emails = ["voce@exemplo.com"]

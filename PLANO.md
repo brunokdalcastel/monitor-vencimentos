@@ -54,7 +54,7 @@ Cada uma vira um ADR em `docs/decisoes/` na T01.
 Nada de código antes disto.
 
 - [ ] **M0.1** Conferir contrato de trabalho (exclusividade, não concorrência, propriedade intelectual). Usar equipamento, conta e horário próprios.
-- [x] **M0.2** Assinatura Azure pessoal + **Budget com alerta** (ex.: US$ 10/mês, alertas a 50/80/100%). — Confirmado em 2026-09-22: assinatura "Azure subscription 1" (`id-da-assinatura`) já logada via `az`; budget `laboratorio-mensal-50-brl` (R$ 50/mês, alertas 50/80/100% para voce@exemplo.com) já existente e cobrindo a assinatura.
+- [x] **M0.2** Assinatura Azure pessoal + **Budget com alerta** (ex.: US$ 10/mês, alertas a 50/80/100%). — Confirmado em 2026-09-22: assinatura pessoal já logada via `az`; budget de assinatura (R$ 50/mês, alertas 50/80/100% para o e-mail do dono) já existente e cobrindo a assinatura.
 - [x] **M0.3** Conta GitHub e repositório **privado** `monitor-vencimentos` (vazio). — Criado em 2026-09-22: https://github.com/brunokdalcastel/monitor-vencimentos (privado); histórico local (T01+T02) enviado para `origin/master`.
 - [x] **M0.4** Instalar localmente: PowerShell 7.4+, Azure Functions Core Tools v4, Azurite (`npm i -g azurite`), Terraform ≥ 1.9, Azure CLI, Git, Pester 5 e PSScriptAnalyzer (`Install-Module Pester, PSScriptAnalyzer -Scope CurrentUser`). — Confirmado em 2026-09-22: PowerShell 7.4.20, Git 2.52.0, Terraform 1.14.3, Azure CLI 2.80.0, Azure Functions Core Tools 4.15.0, Azurite 3.37.0, Pester 5.9.1, PSScriptAnalyzer 1.25.0. Pester/PSScriptAnalyzer instalados no módulo do Windows PowerShell 5.1; se necessário no 7.4, rodar `Install-Module` novamente dentro do `pwsh`.
 - [ ] **M0.5** Revisar a tabela de decisões acima e ajustar o que quiser.

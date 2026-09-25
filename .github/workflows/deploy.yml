@@ -1,12 +1,9 @@
 name: Deploy
 
+# Só manual: sem push automático, pra um commit nunca recriar/alterar a infra do
+# Azure sozinho. Precisa das variáveis AZURE_* e ADMIN_EMAIL no repositório e do
+# Environment "dev" — ver infra/README.md.
 on:
-  push:
-    branches: [master]
-    paths:
-      - "src/**"
-      - "infra/**"
-      - ".github/workflows/deploy.yml"
   workflow_dispatch: {}
 
 # id-token: write — exigido pra Azure AD emitir o token OIDC (login sem segredo, D11).
@@ -26,6 +23,9 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_USE_OIDC: true
+      # Dados pessoais fora do Git (ver infra/pessoal.auto.tfvars.example).
+      TF_VAR_admin_email: ${{ vars.ADMIN_EMAIL }}
+      TF_VAR_budget_contact_emails: '["${{ vars.ADMIN_EMAIL }}"]'
     steps:
       - uses: actions/checkout@v4
 
