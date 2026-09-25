@@ -16,7 +16,12 @@ jobs:
         shell: pwsh
         run: |
           Install-Module PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser
-          $resultados = Invoke-ScriptAnalyzer -Path ./src, ./agent, ./tools -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          # -Path aceita um caminho só (não lista) — um por vez.
+          $resultados = './src', './agent', './tools' |
+            ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 } |
+            # Falso positivo conhecido: requirements.psd1 é o arquivo de dependências do
+            # worker do Functions, não um manifesto de módulo (ver T08 no PLANO.md).
+            Where-Object { -not ($_.RuleName -eq 'PSMissingModuleManifestField' -and $_.ScriptName -eq 'requirements.psd1') }
           if ($resultados) {
             $resultados | Format-Table -AutoSize | Out-String | Write-Host
             throw "PSScriptAnalyzer encontrou $($resultados.Count) apontamento(s)."

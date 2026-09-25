@@ -26,7 +26,7 @@ Especificação: `docs/especificacao.md` (antes da T01: `projeto-monitor-vencime
 ```powershell
 Invoke-Pester ./tests -ExcludeTag Integration          # testes unitários
 Invoke-Pester ./tests -Tag Integration                  # integração (rede / Azurite)
-Invoke-ScriptAnalyzer -Path ./src, ./agent, ./tools -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+'./src','./agent','./tools' | % { Invoke-ScriptAnalyzer -Path $_ -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 }   # -Path não aceita lista
 terraform -chdir=infra fmt -check; terraform -chdir=infra validate
 azurite --location .azurite --silent                    # Storage local
 func start --script-root src/functions                  # Function local
