@@ -31,14 +31,20 @@ resource "azurerm_function_app_flex_consumption" "main" {
   }
 
   app_settings = {
+    # Sem isso, o provider injeta um AzureWebJobsStorage com connection string de
+    # chave (Storage Account key) — que vem VAZIA porque shared_access_key_enabled =
+    # false (D3), derrubando o host inteiro ("InternalServerError from host
+    # runtime", achado no primeiro deploy real, ver Pendências da T12 no PLANO.md).
+    # Conexão baseada em identidade: a própria Managed Identity da Function autentica
+    # (precisa de Storage Blob/Queue/Table Data Contributor — ver papéis abaixo).
+    AzureWebJobsStorage__accountName = azurerm_storage_account.main.name
+
     TABELAS_ENDPOINT  = azurerm_storage_account.main.primary_table_endpoint
     TABELAS_MODO_AUTH = "ManagedIdentity"
     EMAIL_MODO        = "Envio"
     ACS_ENDPOINT      = "https://${azurerm_communication_service.main.hostname}"
-    # DoNotReply@<domínio gerenciado pelo Azure> — ver observação em email.tf sobre o
-    # atributo from_sender_domain não estar confirmado contra a API real ainda.
-    ACS_REMETENTE = "DoNotReply@${azurerm_email_communication_service_domain.managed.from_sender_domain}"
-    ADMIN_EMAIL   = var.admin_email
+    ACS_REMETENTE     = "DoNotReply@${azurerm_email_communication_service_domain.managed.from_sender_domain}"
+    ADMIN_EMAIL       = var.admin_email
   }
 
   site_config {
@@ -64,6 +70,14 @@ resource "azurerm_role_assignment" "function_blob_deploy" {
   principal_id         = azurerm_function_app_flex_consumption.main.identity[0].principal_id
 }
 
+# AzureWebJobsStorage baseado em identidade (acima) também usa fila internamente
+# (bookkeeping do próprio host do Functions).
+resource "azurerm_role_assignment" "function_queue_data" {
+  scope                = azurerm_storage_account.main.id
+  role_definition_name = "Storage Queue Data Contributor"
+  principal_id         = azurerm_function_app_flex_consumption.main.identity[0].principal_id
+}
+
 # Único papel embutido do Azure pra Communication/Email Services — não existe uma
 # versão mais restrita "só enviar" (checado com `az role definition list` antes de
 # codar). Ver Pendências da T09 sobre essa limitação.
@@ -77,4 +91,31 @@ resource "azurerm_role_assignment" "function_keyvault_secrets" {
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_function_app_flex_consumption.main.identity[0].principal_id
+}
+
+# O Azure injeta automaticamente AzureWebJobsStorage e
+# DEPLOYMENT_STORAGE_CONNECTION_STRING como connection string de CHAVE — vêm com a
+# chave vazia porque shared_access_key_enabled = false (D3), e isso derruba o host
+# inteiro ("error performing a read operation on the Blob Storage Secret
+# Repository" no Application Insights; achado no primeiro deploy real, ver
+# Pendências da T12 no PLANO.md). Não é algo que o Terraform gerencia (não aparece
+# no `app_settings` do state, `terraform plan` não detecta/desfaz esta remoção) —
+# é a própria plataforma que injeta na criação. AzureWebJobsStorage__accountName
+# (acima, baseado em identidade) já cobre a necessidade real; essas duas sobram e
+# quebram o host, então removidas aqui via CLI logo após a criação/atualização.
+resource "null_resource" "remove_broken_storage_settings" {
+  triggers = {
+    function_app_id = azurerm_function_app_flex_consumption.main.id
+  }
+
+  provisioner "local-exec" {
+    command = "az webapp config appsettings delete -g ${data.azurerm_resource_group.dev.name} -n ${azurerm_function_app_flex_consumption.main.name} --setting-names AzureWebJobsStorage DEPLOYMENT_STORAGE_CONNECTION_STRING"
+  }
+
+  depends_on = [
+    azurerm_function_app_flex_consumption.main,
+    azurerm_role_assignment.function_table_data,
+    azurerm_role_assignment.function_blob_deploy,
+    azurerm_role_assignment.function_queue_data,
+  ]
 }
